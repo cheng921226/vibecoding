@@ -1,4 +1,3 @@
-// TODO(feature/numerical-solver): 實作牛頓法、Jacobian 與位置分析核心。
 // Person 3 — Numerical Solver
 // Newton-Raphson、Jacobian、線性方程與位置分析核心。
 
@@ -9,3 +8,4 @@ function solve(t,guess,opt){let pre=prescribed(t),unk=all().filter(j=>!(j in pre
 const guess0=()=>Object.fromEntries(all().map(j=>[j,C[j].slice()]));
 function signature(p){return md().l.filter(l=>l.j.length===3).map(l=>{let[a,b,c]=l.j,A=p[a],B=p[b],D=p[c],z=(B[0]-A[0])*(D[1]-A[1])-(B[1]-A[1])*(D[0]-A[0]);return l.id+(z>=0?'+':'-')}).join('|')}
 function sample(a,s){return{angle:a,pos:s.pos,residual:s.residual,sigma:s.sigma,signature:signature(s.pos)}}
+ㄋ
