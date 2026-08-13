@@ -1,4 +1,3 @@
-// TODO(feature/geometry-validation): 實作速度瞬心、傳動角、極限圓與幾何交叉驗證。
 // Person 5 — Geometry Cross-validation
 // 四連桿核心、速度瞬心、傳動角與極限圓交叉驗證。
 

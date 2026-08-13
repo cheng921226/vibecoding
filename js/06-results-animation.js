@@ -1,4 +1,4 @@
-// TODO(feature/results-animation): 實作結果、動畫、表格與 JSON 匯出。
+// Person 6 — Results / Animation
 // 結果表格、建議、Canvas 繪圖、分支動畫與 UI 顯示。
 
 function applyAssemblyChoice(i,idx){let p=analysis.specified[i];if(!p||!p.candidates||!p.candidates[idx])return;let ch=p.candidates[idx];p.chosen=idx;p.circuit=ch.branch.circuit;p.branch=ch.branch.id;p.endpoint=ch.branch.endpoint;p.s=ch.sample;update()}
