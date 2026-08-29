@@ -1,5 +1,6 @@
 // Person 1 — UI / Geometry
 // 幾何輸入、座標/極座標、拓樸顯示與基本驗證。
+if(typeof window.escapeHtml!=='function'){window.escapeHtml=function(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');};}
 
 function svgCard(m){
  let q=Object.values(m.c),xs=q.map(x=>x[0]),ys=q.map(x=>x[1]),mnx=Math.min(...xs)-35,mxx=Math.max(...xs)+35,mny=Math.min(...ys)-35,mxy=Math.max(...ys)+35;
@@ -8,7 +9,7 @@ function svgCard(m){
  let dots=Object.entries(m.c).map(([j,p])=>`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="3.2" fill="#fff" stroke="#17343b" stroke-width="1.4"/><text x="${X(p[0])+5}" y="${Y(p[1])-4}" font-size="8" fill="#233940">${j}</text>`).join('');
  return `<svg viewBox="0 0 240 125" aria-label="${m.f} 構型圖">${L}${dots}</svg>`
 }
-function renderCards(){$('modelCards').innerHTML=Object.entries(M).map(([id,m])=>`<button class="model-card ${id===selected?'active':''}" data-id="${id}">${svgCard(m)}<h3>${m.h}</h3><p>${m.f}</p><span>可分析</span></button>`).join('');document.querySelectorAll('.model-card').forEach(b=>b.onclick=()=>{selected=b.dataset.id;init();renderCards()});$('modelNote').innerHTML=`<b>${md().h}｜${md().f}</b><br>${md().d}<br>固定桿 ${md().g}；輸入桿 ${md().i}。`}
+function renderCards(){$('modelCards').innerHTML=Object.entries(M).map(([id,m])=>`<button class="model-card ${id===selected?'active':''}" data-id="${id}">${svgCard(m)}<h3>${m.h}</h3><p>${m.f}</p><span>可分析</span></button>`).join('');document.querySelectorAll('.model-card').forEach(b=>b.onclick=()=>{selected=b.dataset.id;init();renderCards()});$('modelNote').innerHTML=`<b>${md().h}｜${md().f}</b><br>${md().d}<br>固定桿 <b>${md().g}</b>；輸入桿 <b>${md().i}</b>。<br><span class="name-hint">命名：L1～L6 為六根連桿；A～G 為七個旋轉接頭。B＝二接頭輸入桿，T＝三接頭輸入桿；下標 4／5 表示輸入位於四連桿組或五連桿組。</span>`}
 function init(){C=clone(md().c);renderGeometryInputs();renderLengths();drawTopo();valid();$('runTitle').innerHTML=`分析 ${md().h}｜${md().f}`}
 function cons(){let r=[];md().l.forEach(l=>pairs(l.j).forEach(([a,b])=>r.push({a,b,L:dst(C[a],C[b]),link:l.id})));return r}
 function geometryParentMap(){
@@ -48,4 +49,51 @@ function setInputMode(mode){
 function renderGeometryInputs(){renderCoords();renderPolar();setInputMode(inputMode)}
 function renderLengths(){$('lengthTable').innerHTML=md().l.map(l=>`<div class="length-item"><b>${l.id}</b> ${l.n}<br>${pairs(l.j).map(([a,b])=>`${a}${b}=${dst(C[a],C[b]).toFixed(4)}`).join('；')}</div>`).join('')}
 function drawTopo(){let s=$('topologySvg'),q=Object.values(C),xs=q.map(x=>x[0]),ys=q.map(x=>x[1]),mnx=Math.min(...xs)-70,mxx=Math.max(...xs)+70,mny=Math.min(...ys)-70,mxy=Math.max(...ys)+70,X=x=>(x-mnx)/(mxx-mnx)*560+30,Y=y=>(y-mny)/(mxy-mny)*400+30;s.innerHTML='';md().l.forEach(l=>pairs(l.j).forEach(([a,b])=>{let A=C[a],B=C[b],co=l.id===md().g?'#788b92':l.id===md().i?'#b65a42':'#12676c';s.insertAdjacentHTML('beforeend',`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="${co}" stroke-width="${l.j.length===3?8:6}" stroke-linecap="round"/>`);let mx=(X(A[0])+X(B[0]))/2,my=(Y(A[1])+Y(B[1]))/2,dx=Y(B[1])-Y(A[1]),dy=-(X(B[0])-X(A[0])),n=Math.hypot(dx,dy)||1;s.insertAdjacentHTML('beforeend',`<text x="${mx+dx/n*28}" y="${my+dy/n*28}" font-size="13" text-anchor="middle">${a}${b}</text>`)}));Object.entries(C).forEach(([j,p])=>s.insertAdjacentHTML('beforeend',`<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="7" fill="#fff" stroke="#17343b" stroke-width="3"/><text x="${X(p[0])+12}" y="${Y(p[1])-10}" font-size="16" font-weight="bold">${j}</text>`));$('diagramTitle').innerHTML=`${md().h}｜固定 ${md().g}／輸入 ${md().i}`;$('modelBadge').innerHTML=md().h}
-function valid(){let bad=cons().some(x=>x.L<1e-6),cm=il().j.filter(j=>gj().has(j)).length,m=bad?'存在重合接頭。':cm!==1?'固定桿與輸入桿必須共用一個接頭。':'✓ 幾何與拓樸檢查通過';$('geometryStatus').textContent=m;$('geometryStatus').className='status '+(bad||cm!==1?'bad':'ok');return!bad&&cm===1}
+function valid(){let bad=cons().some(x=>x.L<1e-6),cm=il().j.filter(j=>gj().has(j)).length,m;if(bad){m='存在重合接頭，請調整座標或桿長。';}else if(cm!==1){m=cm===0?'注意：固定桿與輸入桿目前沒有共用接頭，將以輸入桿端點作為驅動樞紐（部分型式如 SⅡB₅ 屬此情形）。':'注意：固定桿與輸入桿共用超過一個接頭，請檢查拓樸。';}else{m='✓ 幾何與拓樸檢查通過';}$('geometryStatus').textContent=m;$('geometryStatus').className='status '+(bad?'bad':(cm===1?'ok':''));return!bad}
+
+
+/** 代入目前九型的範例座標／尺寸 */
+function loadExampleGeometry() {
+  if (typeof init === 'function') init();
+  const st = $('geometryStatus');
+  if (st && !st.textContent) { /* init/valid sets status */ }
+}
+
+/** 清除目前輸入的尺寸與座標（歸零，不改構型） */
+function clearGeometry() {
+  const joints = typeof all === 'function' ? all() : Object.keys(C || {});
+  joints.forEach(j => { C[j] = [0, 0]; });
+  if (typeof renderGeometryInputs === 'function') renderGeometryInputs();
+  if (typeof renderLengths === 'function') renderLengths();
+  if (typeof drawTopo === 'function') drawTopo();
+  if (typeof valid === 'function') valid();
+  const st = $('geometryStatus');
+  if (st) {
+    st.textContent = '已清除數值，請重新輸入或代入範例尺寸。';
+    st.className = 'status';
+  }
+}
+
+/** 依目前欄位重算並更新圖與桿長表 */
+function updateGeometry() {
+  if (typeof inputMode !== 'undefined' && inputMode === 'polar' && typeof rebuildFromPolar === 'function') {
+    rebuildFromPolar();
+  } else {
+    document.querySelectorAll('#coordFields input').forEach(x => {
+      if (x.dataset.j != null) C[x.dataset.j][+x.dataset.k] = +x.value;
+    });
+    if (typeof renderPolar === 'function') renderPolar();
+    if (typeof renderLengths === 'function') renderLengths();
+    if (typeof drawTopo === 'function') drawTopo();
+    if (typeof valid === 'function') valid();
+  }
+}
+
+function wireGeometryActionButtons() {
+  const loadBtn = $('geoLoadExample');
+  const clearBtn = $('geoClear');
+  const updateBtn = $('geoUpdate');
+  if (loadBtn) loadBtn.onclick = () => loadExampleGeometry();
+  if (clearBtn) clearBtn.onclick = () => clearGeometry();
+  if (updateBtn) updateBtn.onclick = () => updateGeometry();
+}

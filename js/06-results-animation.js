@@ -7,7 +7,7 @@ function preview(){let s=solve(rad(+$('initialAngle').value),guess0(),{tol:+$('p
 
 function renderConditionDashboard(){if(!$('conditionCanvas'))return;$('conditionModel').innerHTML=`${md().h}｜固定 ${md().g}／輸入 ${md().i}`;$('rangeStartLabel').textContent=`${+$('startAngle').value}°`;$('rangeEndLabel').textContent=`${+$('endAngle').value}°`;$('conditionInitial').textContent=`${+$('initialAngle').value}°`;$('conditionStep').textContent=`${+$('stepAngle').value}°`;$('conditionMinStep').textContent=`${+$('minStep').value}°`;let a=+$('startAngle').value,b=+$('endAngle').value,c=+$('initialAngle').value,p=b!==a?Math.max(0,Math.min(100,(c-a)/(b-a)*100)):50;$('initialAngleMarker').style.left=`${p}%`;let s=solve(rad(c),guess(),{tol:+$('previewTol').value,maxIter:100});drawMech($('conditionCanvas'),s.ok?s.pos:coords)}
 function specifiedItems(){return[...document.querySelectorAll('.position')].map((r,i)=>({name:r.querySelector('.posName').value||`P${i+1}`,angle:+r.querySelector('.posAngle').value}))}
-function renderSpecifiedDiagram(active=-1){if(!$('specifiedCanvas'))return;let items=specifiedItems(),a=+$('startAngle').value,b=+$('endAngle').value,box=$('specifiedMarkers');box.innerHTML=items.map((p,i)=>{let pct=b!==a?Math.max(2,Math.min(98,(p.angle-a)/(b-a)*100)):50;return`<button class="spec-marker ${i===active?'active':''}" data-index="${i}" style="left:${pct}%"><i></i><b>${p.name}</b><small>${p.angle}°</small></button>`}).join('');box.querySelectorAll('button').forEach(x=>x.onclick=()=>previewSpecified(+x.dataset.index));if(items.length){let i=active>=0?active:0,s=solve(rad(items[i].angle),guess(),{tol:+$('previewTol').value,maxIter:100});drawMech($('specifiedCanvas'),s.ok?s.pos:coords);$('specifiedNow').textContent=s.ok?`${items[i].name}｜θ = ${items[i].angle}°`:`${items[i].name} 無法收斂`}else{drawMech($('specifiedCanvas'),coords);$('specifiedNow').textContent='尚未設定位置'}}
+function renderSpecifiedDiagram(active=-1){if(!$('specifiedCanvas'))return;let items=specifiedItems(),a=+$('startAngle').value,b=+$('endAngle').value,box=$('specifiedMarkers');box.innerHTML=items.map((p,i)=>{let pct=b!==a?Math.max(2,Math.min(98,(p.angle-a)/(b-a)*100)):50;return`<button class="spec-marker ${i===active?'active':''}" data-index="${i}" style="left:${pct}%"><i></i><b>${escapeHtml(p.name)}</b><small>${p.angle}°</small></button>`}).join('');box.querySelectorAll('button').forEach(x=>x.onclick=()=>previewSpecified(+x.dataset.index));if(items.length){let i=active>=0?active:0,s=solve(rad(items[i].angle),guess(),{tol:+$('previewTol').value,maxIter:100});drawMech($('specifiedCanvas'),s.ok?s.pos:coords);$('specifiedNow').textContent=s.ok?`${items[i].name}｜θ = ${items[i].angle}°`:`${items[i].name} 無法收斂`}else{drawMech($('specifiedCanvas'),coords);$('specifiedNow').textContent='尚未設定位置'}}
 function previewSpecified(i){stopSpecifiedPreview();specifiedPreview.index=i;renderSpecifiedDiagram(i)}
 function stopSpecifiedPreview(){if(specifiedPreview.timer)clearTimeout(specifiedPreview.timer);specifiedPreview.timer=0}
 function playSpecifiedPreview(){stopSpecifiedPreview();let items=specifiedItems();if(!items.length)return;specifiedPreview.index=0;const next=()=>{if(specifiedPreview.index>=items.length){specifiedPreview.timer=0;return}renderSpecifiedDiagram(specifiedPreview.index++);specifiedPreview.timer=setTimeout(next,1100)};next()}
@@ -36,20 +36,63 @@ function drawFrameMechanism(ctx,v,s){
 function animBranch(){if(!analysis||!analysis.branches.length)return null;let i=Math.max(0,Math.min(analysis.branches.length-1,animation.branch||0));return analysis.branches[i]}
 function animSamples(){let b=animBranch();return b?b.samples:[]}
 function renderBranchSelector(){
- let box=$('branchSelector');if(!box)return;if(!analysis||!analysis.branches.length){box.innerHTML='';return}
- box.innerHTML=analysis.branches.map((b,i)=>`<button class="branch-chip${i===animation.branch?' active':''}" data-b="${i}">迴路${b.circuit}·分支${b.id}<small>${b.from.toFixed(1)}°～${b.to.toFixed(1)}°</small></button>`).join('');
- box.querySelectorAll('button').forEach(x=>x.onclick=()=>{stopAnimation();animation.branch=+x.dataset.b;animation.index=0;renderBranchSelector();drawResult()})
+  const box=$('branchSelector');
+  if(!box)return;
+  const wrap=box.closest('.branch-selector-wrap');
+  const oldMore=wrap?wrap.querySelector('.branch-more-btn'):null;
+  if(oldMore)oldMore.remove();
+  if(!analysis||!analysis.branches||!analysis.branches.length){
+    box.innerHTML='';
+    if(wrap)wrap.classList.remove('is-expanded');
+    return;
+  }
+  box.innerHTML=analysis.branches.map((b,i)=>`<button type="button" class="branch-chip${i===animation.branch?' active':''}" data-b="${i}">迴路${b.circuit}·分支${b.id}<small>${b.from.toFixed(1)}°～${b.to.toFixed(1)}°</small></button>`).join('');
+  box.querySelectorAll('button.branch-chip').forEach(x=>x.onclick=()=>{
+    stopAnimation();
+    animation.branch=+x.dataset.b;
+    animation.index=0;
+    renderBranchSelector();
+    drawResult();
+  });
+  const many=analysis.branches.length>3;
+  if(many&&wrap){
+    const more=document.createElement('button');
+    more.type='button';
+    more.className='branch-more-btn';
+    more.id='branchSelectorMore';
+    const open=wrap.classList.contains('is-expanded');
+    more.innerHTML='<span class="branch-caret" aria-hidden="true"></span>'; more.classList.toggle('is-open', open); more.title=open?'收合':'展開其餘分支'; more.setAttribute('aria-label', open?'收合':'展開其餘分支');
+    more.setAttribute('aria-expanded',open?'true':'false');
+    more.onclick=()=>{
+      const now=wrap.classList.toggle('is-expanded');
+      more.classList.toggle('is-open', now);
+      more.title=now?'收合':'展開其餘分支';
+      more.setAttribute('aria-label', now?'收合':'展開其餘分支');
+      more.setAttribute('aria-expanded',now?'true':'false');
+    };
+    wrap.appendChild(more);
+  }else if(wrap){
+    wrap.classList.remove('is-expanded');
+  }
 }
 function currentAnimationSample(){
  let ss=animSamples();if(!ss.length)return null;
  animation.index=Math.max(0,Math.min(ss.length-1,animation.index));return ss[animation.index]
 }
 function updateAnimationReadout(){
- let ss=animSamples(),s=currentAnimationSample(),tl=$('animationTimeline');if(!s){if(tl){tl.max=0;tl.value=0}return}
+ let ss=animSamples(),s=currentAnimationSample(),tl=$('animationTimeline');
+ if(!s){
+  if(tl){tl.max=0;tl.value=0}
+  if($('animationAngle')) $('animationAngle').textContent='輸入角：—';
+  if($('animationFrame')) $('animationFrame').textContent='位置：—';
+  if($('animationBranch')) $('animationBranch').textContent='分支：—';
+  return;
+ }
  if(tl){tl.max=Math.max(0,ss.length-1);tl.value=animation.index}
- $('animationAngle').textContent=`輸入角：${s.angle.toFixed(5)}°`;
- $('animationFrame').textContent=`位置：${animation.index+1} / ${ss.length}`;
- let b=animBranch();$('animationBranch').textContent=`目前分支：${b?`迴路${b.circuit}·分支${b.id}`:'—'}`
+ if($('animationAngle')) $('animationAngle').textContent=`輸入角：${s.angle.toFixed(5)}°`;
+ if($('animationFrame')) $('animationFrame').textContent=`位置：${animation.index+1} / ${ss.length}`;
+ let b=animBranch();
+ if($('animationBranch')) $('animationBranch').textContent=b?`分支：迴路${b.circuit}·${b.id}`:'分支：—';
 }
 
 function drawLimitCircleLayer(ctx,v){
@@ -108,65 +151,60 @@ function adjustmentAdvice(){
  const sp=analysis.specified,labels=(analysis.defects&&analysis.defects.labels)||[],ok=sp.filter(x=>x.ok),items=[];
  const fmt=a=>`${(+a).toFixed(2)}°`;
  const tolInput=+$('solveTol').value;
- const maxRes=analysis.samples.length?Math.max(...analysis.samples.map(x=>x.res)):Infinity;
- // 各分支的可達角度區間（取用實際 from/to，順序不拘）
+ const maxRes=analysis.samples.length?Math.max(...analysis.samples.map(x=>x.res!=null?x.res:(x.residual||0))):Infinity;
  const ranges=analysis.branches.map(b=>[Math.min(b.from,b.to),Math.max(b.from,b.to)]).sort((a,b)=>a[0]-b[0]);
- const rangeText=ranges.length?[...new Set(ranges.map(r=>`${fmt(r[0])}～${fmt(r[1])}`))].join('、'):'（尚無可達區間）';
+ const rangeText=ranges.length?[...new Set(ranges.map(r=>`${fmt(r[0])}～${fmt(r[1])}`))].join('、'):'（尚無）';
  const add=(sev,t,d)=>items.push({sev,t,d});
 
  if(!sp.length){
-  add('warn','尚未設定指定位置',`目前找到 ${analysis.branches.length} 個分支、${analysis.circuits.length} 個迴路，可達角度區間為 ${rangeText}。到「指定位置」加入要檢驗的輸入角，才能判斷是否有分支／迴路缺陷。`);
+  add('warn','尚未設定指定位置',`目前有 ${analysis.circuits.length} 個迴路、${analysis.branches.length} 個分支；可達區間 ${rangeText}。請到「指定位置」加入要檢查的輸入角。`);
  }
 
- // ── 不可達位置：逐一指出，並給最近的可達區間與差距 ──
  const bad=sp.filter(x=>!x.ok);
  if(bad.length){
   bad.forEach(p=>{
    let near=null,dist=Infinity;
    ranges.forEach(r=>{let d=p.angle<r[0]?r[0]-p.angle:p.angle>r[1]?p.angle-r[1]:0;if(d<dist){dist=d;near=r}});
-   add('bad',`${p.name}（${fmt(p.angle)}）不可達`,
-    near?`此角度落在所有分支的可達範圍外。最近的可達區間是 ${fmt(near[0])}～${fmt(near[1])}，相差約 ${fmt(dist)}。把 ${p.name} 調進該區間，或把「分析角度範圍」與初始構形改成涵蓋 ${fmt(p.angle)} 的裝配。`
-        :`目前沒有任何有效分支可比對，先確認初始構形能收斂再重跑分析。`);
+   add('bad',`${escapeHtml(p.name)}（${fmt(p.angle)}）不可達`,
+    near
+      ? `${escapeHtml(p.name)} 落在可達範圍外。最近區間為 ${fmt(near[0])}～${fmt(near[1])}（約差 ${fmt(dist)}）。可將該角度改入此區間，或擴大分析範圍並調整初始構形，使 ${fmt(p.angle)} 落在可追蹤裝配內。`
+      : `目前沒有可對照的有效分支。請先確認初始構形可收斂，再重新分析。`);
   });
-  add('bad','若該角度應該有解卻找不到',`把「初始步長」降到 0.2°～0.5°、「最小步長」降到 1e-5，並確認固定桿與輸入桿只共用一個接頭、沒有接頭重合或桿件幾乎共線。`);
+  add('warn','若預期此角度應有解',`可將初始步長調為 0.2°～0.5°、最小步長調為 1e-5 後重跑；並檢查固定桿與輸入桿是否只共用一個接頭，以及是否有接頭重合或桿件近乎共線。`);
  }
 
- // ── 分支缺陷：點名各位置所在分支，並指出夾在中間的死點 ──
  if(labels.includes('分支缺陷')){
   const byB={};ok.forEach(p=>{(byB[`${p.tCircuit}/${p.tBranch}`]||(byB[`${p.tCircuit}/${p.tBranch}`]=[])).push(p)});
-  const groups=Object.entries(byB).map(([k,ps])=>{const[ci,bi]=k.split('/');return `迴路${ci}·分支${bi}｛${ps.map(p=>`${p.name} ${fmt(p.angle)}`).join('、')}｝`}).join('　⟷　');
-  add('warn','指定位置分屬同一迴路的不同分支',`${groups}。分支之間被死點隔開，輸入桿無法在不經過死點的情況下連續走過去。`);
+  const groups=Object.entries(byB).map(([k,ps])=>{const[ci,bi]=k.split('/');return `迴路 ${ci}·分支 ${bi}（${ps.map(p=>`${escapeHtml(p.name)} ${fmt(p.angle)}`).join('、')}）`}).join('；');
+  add('warn','指定位置分屬不同分支',`${groups}。分支之間由死點隔開，無法在不經過死點的情況下連續通過。`);
   const angs=ok.map(x=>x.angle),lo=Math.min(...angs),hi=Math.max(...angs);
   const between=analysis.dead.filter(d=>d.angle>=lo-1e-6&&d.angle<=hi+1e-6);
-  if(between.length)add('warn','夾在中間的死點',`介於 ${fmt(lo)}～${fmt(hi)} 的死點候選：${between.map(d=>fmt(d.angle)+(d.verified?'（已驗證）':'（未驗證候選）')).join('、')}。要讓這些位置落在同一分支，需把這些死點移出此區間。`);
-  add('warn','如何調整',`①把指定位置都改到同一分支的角度區間（見「迴路／分支」表）；②或改用另一組初始裝配座標，讓目標位置本來就在同一分支；③或修改輸入桿與相鄰桿長，把上述死點推離 ${fmt(lo)}～${fmt(hi)}。`);
+  if(between.length)add('warn','區間內的死點',`${fmt(lo)}～${fmt(hi)} 之間：${between.map(d=>fmt(d.angle)+(d.verified?'（已驗證）':'（候選）')).join('、')}。若要同一分支通過，需調整尺寸或目標角，使死點移出此區間。`);
+  add('warn','建議作法',`將各指定角改到同一分支的可達區間；或更換初始裝配；或調整輸入桿與鄰近桿長，使死點離開 ${fmt(lo)}～${fmt(hi)}。`);
  }
 
- // ── 迴路缺陷：點名各位置所在迴路 ──
  if(labels.includes('迴路缺陷')){
   const byC={};ok.forEach(p=>{(byC[p.tCircuit]||(byC[p.tCircuit]=[])).push(p)});
-  const groups=Object.entries(byC).map(([k,ps])=>`迴路${k}｛${ps.map(p=>`${p.name} ${fmt(p.angle)}`).join('、')}｝`).join('　⟷　');
-  add('bad','指定位置分屬不同迴路',`${groups}。不同迴路是完全分離的裝配，必須拆解關節重新組合才能互通，光轉動輸入桿到不了。`);
-  add('bad','如何調整',`選定其中一個迴路當工作迴路，把所有指定位置改進它的可達區間（${rangeText}）；若機構本來就得跨迴路運作，代表尺寸需要重新設計，讓目標位置落在同一連續迴路。`);
+  const groups=Object.entries(byC).map(([k,ps])=>`迴路 ${k}（${ps.map(p=>`${escapeHtml(p.name)} ${fmt(p.angle)}`).join('、')}）`).join('；');
+  add('bad','指定位置分屬不同迴路',`${groups}。不同迴路代表分離的裝配，需拆解重組才能切換，單靠轉動輸入桿無法到達。`);
+  add('bad','建議作法',`選定一個工作迴路，將所有指定角改入其可達區間（${rangeText}）。若設計必須跨迴路，則需重新檢討尺寸，使目標位置落在同一連續迴路。`);
  }
 
- // ── 無缺陷：報告最靠近的死點裕度 ──
  if(labels.includes('同一迴路、同一分支')&&ok.length){
-  add('ok','目前可連續通過',`${ok.map(p=>p.name).join('、')} 都在同一迴路同一分支，無分支／迴路缺陷。`);
+  add('ok','可連續通過',`${ok.map(p=>escapeHtml(p.name)).join('、')} 位於同一迴路與同一分支。`);
   if(analysis.dead.length){
    let worst=null;ok.forEach(p=>analysis.dead.forEach(d=>{let dd=periodicAngleDiff(p.angle,d.angle);if(!worst||dd<worst.dd)worst={p,d,dd}}));
-   if(worst)add(worst.dd<5?'warn':'ok','死點裕度',`最靠近死點的是 ${worst.p.name}（${fmt(worst.p.angle)}），距離死點候選 ${fmt(worst.d.angle)} 只有 ${fmt(worst.dd)}。${worst.dd<5?'裕度偏小，實機容易在此卡死或抖動，建議把該位置往分支中段移，或保留更大的角度安全裕度。':'裕度尚可。'}`);
+   if(worst)add(worst.dd<5?'warn':'ok','死點裕度',`${escapeHtml(worst.p.name)}（${fmt(worst.p.angle)}）距最近死點 ${fmt(worst.d.angle)} 約 ${fmt(worst.dd)}。${worst.dd<5?'裕度偏小，建議將工作點移向分支中段或加大安全角。':'目前裕度尚可。'}`);
   }
-  add('ok','高精度確認',`把「初始步長」降到 0.1°、「最小步長」降到 1e-5 再跑一次，確認分支歸屬穩定。`);
+  add('ok','可選：提高解析',`若需更穩定的分支歸屬，可將初始步長設為 0.1°、最小步長設為 1e-5 後再分析一次。`);
  }
 
- // ── 數值品質：殘差 ──
  if(Number.isFinite(maxRes)&&maxRes>tolInput*100){
-  add('bad','位置殘差偏高',`最大殘差 ${maxRes.toExponential(2)}，已超過容許值 ${tolInput.toExponential(1)} 的 100 倍，位置精度不足。把「最大疊代次數」加到 120～200、初始步長降低，並檢查桿長是否互相矛盾（例如三角不等式不成立）。`);
+  add('bad','位置殘差偏高',`最大殘差 ${maxRes.toExponential(2)}，明顯大於容許值 ${tolInput.toExponential(1)}。可提高最大疊代次數、縮小步長，並檢查桿長是否互相矛盾。`);
  }
 
  if(!analysis.samples.length){
-  add('bad','沒有有效位置',`此範圍內找不到任何收斂裝配。先按「重設目前型式範例」載入可行構形，再從初始角 ±30° 的小範圍重跑。`);
+  add('bad','沒有有效位置',`此角度範圍內無收斂裝配。可載入目前型式範例，或先在初始角附近 ±30° 小範圍重跑。`);
  }
  return items;
 }
@@ -181,22 +219,30 @@ function update(){
  $('branchCount').textContent=analysis.branches.length;
  $('deadCount').textContent=`${analysis.verifiedDeadCount}/${analysis.dead.length}`;
  $('classification').textContent=ttl;$('classificationReason').textContent=d.reasons.join('；');
- $('interpretation').innerHTML=`<b>${ttl}</b><p>${d.reasons.join('<br>')}</p><p>模型 ${md().h}｜固定 ${md().g}／輸入 ${md().i}<br><b>論文分支辨識：</b>迴路 ${thesis.circuitCount}／分支 ${thesis.branchCount}<br><b>幾何交叉驗證：</b>${gx.status}${gx.available?`（支持 ${gx.supports}／衝突 ${gx.conflicts}；已驗證死點幾何提示 ${gx.deadSupports}/${gx.deadTotal}）`:''}<br>全域候選：迴路 ${analysis.circuits.length}／分支 ${analysis.branches.length}／已驗證死點 ${analysis.verifiedDeadCount}（候選 ${analysis.dead.length}）</p>`;
+ $('interpretation').innerHTML=`<div class="side-block-title">${ttl}</div><p class="side-block-lead">${d.reasons.join('</p><p class="side-block-lead">')}</p><dl class="side-kv"><div><dt>構型</dt><dd>${md().h}（固定 ${md().g}／輸入 ${md().i}）</dd></div><div><dt>指定位置</dt><dd>迴路 ${thesis.circuitCount}、分支 ${thesis.branchCount}</dd></div><div><dt>幾何比對</dt><dd>${gx.status}${gx.available?` · 一致 ${gx.supports}、衝突 ${gx.conflicts}、死點提示 ${gx.deadSupports}/${gx.deadTotal}`:''}</dd></div><div><dt>全範圍</dt><dd>迴路 ${analysis.circuits.length}、分支 ${analysis.branches.length}、死點 ${analysis.verifiedDeadCount}/${analysis.dead.length}</dd></div></dl>`;
  let advice=adjustmentAdvice();
- $('adjustmentPlan').innerHTML=advice.length?advice.map((x,i)=>`<div class="advice-item sev-${x.sev}"><b>${i+1}</b><span><strong class="advice-title">${x.t}</strong><br>${x.d}</span></div>`).join(''):`<div class="advice-item sev-ok"><b>✓</b><span>目前沒有需要調整的項目。</span></div>`;
- const arrow=s=>s>0?'▲遞增':s<0?'▼遞減':'—',deadCell=side=>{if(!side||!side.dead)return '—';let dd=side.dead;return dd.kind!=='candidate'?'<span class="dead-open">範圍端／曲柄</span>':`${dd.angle.toFixed(2)}° <small>${arrow(side.sign)}</small>`};
+ $('adjustmentPlan').innerHTML=advice.length?advice.map((x,i)=>`<div class="advice-item sev-${x.sev}"><b>${i+1}</b><div class="advice-body"><div class="advice-title">${x.t}</div><p class="advice-desc">${x.d}</p></div></div>`).join(''):`<div class="advice-item sev-ok"><b>✓</b><div class="advice-body"><div class="advice-title">目前沒有需要調整的項目</div></div></div>`;
+ const arrow=s=>{const v=Number(s);if(v>0)return'<span class="trend-up">▲遞增</span>';if(v<0)return'<span class="trend-dn">▼遞減</span>';return'<span class="trend-na">（趨勢—）</span>';};
+ const deadCell=side=>{
+  if(!side||!side.dead)return '—';
+  const dd=side.dead;
+  if(dd.kind!=='candidate')return '<span class="dead-open">範圍端／曲柄</span>';
+  const ang=Number.isFinite(dd.angle)?dd.angle.toFixed(2)+'°':'—';
+  // side.sign：趨近該死點時輸出角變化方向（論文分支判據）
+  return `<span class="dead-cell"><span class="dead-ang">${ang}</span> ${arrow(side.sign)}</span>`;
+ };
  $('specifiedRows').innerHTML=analysis.specified.map((p,i)=>{
-  if(!p.ok)return `<tr><td>${p.name}</td><td>${(+p.angle).toFixed(2)}°</td><td>否</td><td colspan="6">不在任何分支的可達範圍</td></tr>`;
+  if(!p.ok)return `<tr><td>${escapeHtml(p.name)}</td><td>${(+p.angle).toFixed(2)}°</td><td>否</td><td colspan="6">不在任何分支的可達範圍</td></tr>`;
   let sel=p.candidates&&p.candidates.length>1?`<select data-spec="${i}">${p.candidates.map((cc,k)=>`<option value="${k}" ${k===p.chosen?'selected':''}>迴路${cc.branch.circuit}／分支${cc.branch.id}</option>`).join('')}</select>`:'單一裝配';
-  return `<tr><td>${p.name}</td><td>${(+p.angle).toFixed(2)}°</td><td>是</td><td>${sel}</td><td>${p.tCircuit||'—'}</td><td>${p.tBranch||'—'}</td><td>${deadCell(p.ep&&p.ep.up)}</td><td>${deadCell(p.ep&&p.ep.dn)}</td><td>${p.s&&p.s.res!=null?p.s.res.toExponential(2):'—'}</td></tr>`
+  return `<tr><td>${escapeHtml(p.name)}</td><td>${(+p.angle).toFixed(2)}°</td><td>是</td><td>${sel}</td><td>${p.tCircuit||'—'}</td><td>${p.tBranch||'—'}</td><td>${deadCell(p.ep&&p.ep.up)}</td><td>${deadCell(p.ep&&p.ep.dn)}</td><td>${p.s&&p.s.res!=null?p.s.res.toExponential(2):'—'}</td></tr>`
  }).join('');
  document.querySelectorAll('#specifiedRows select[data-spec]').forEach(s=>s.onchange=()=>applyAssemblyChoice(+s.dataset.spec,+s.value));
  $('branchRows').innerHTML=analysis.branches.map(b=>`<tr><td>${b.circuit}</td><td>${b.id}</td><td>${b.from.toFixed(3)}°～${b.to.toFixed(3)}°</td><td>${b.samples.length}</td><td>${b.endpoint}</td><td>近死點趨勢 ${b.trend[0]>=0?'＋':'－'}／${b.trend[1]>=0?'＋':'－'}</td></tr>`).join('');
  $('deadRows').innerHTML=analysis.dead.map((d,i)=>`<tr><td>${i+1}</td><td>${d.angle.toFixed(4)}°</td><td>${d.circuit}</td><td>${d.verified?'已通過':'未通過'}<br>${Number.isFinite(d.sigma)?d.sigma.toExponential(3):'—'}</td><td>${(d.residual||0).toExponential(3)}</td><td>${Object.entries(d.pos).map(([j,q])=>`${j}(${q[0].toFixed(2)},${q[1].toFixed(2)})`).join(' ')}</td></tr>`).join('');
- if($('geometryRows')){$('geometryRows').innerHTML=analysis.specified.map(p=>{if(!p.ok)return `<tr><td>${p.name}</td><td colspan="8">不可達</td></tr>`;let g=p.geom;if(!g||!g.available)return `<tr><td>${p.name}</td><td colspan="8">不適用</td></tr>`;let f=x=>Number.isFinite(x)?x.toFixed(6):'∞';let ip=g.icFinite?`(${g.I13[0].toFixed(2)}, ${g.I13[1].toFixed(2)})`:'∞（平行）';let verdict=(g.sign1==='0'||g.sign2==='0'||(Number.isFinite(g.icResidual)&&g.icResidual<=analysis.o.geoTol))?'接近幾何奇異':`符號指紋 ${g.signPair}`;return `<tr><td>${p.name}</td><td>${g.core.links.join('→')}${g.core.virtualInput?'（虛擬輸入）':''}</td><td>${f(g.mu1)}</td><td>${f(g.mu2)}</td><td>${g.signPair}</td><td>${ip}</td><td>${Number.isFinite(g.icResidual)?g.icResidual.toExponential(3):'∞'}</td><td>迴路${p.tCircuit||'—'}／分支${p.tBranch||'—'}</td><td>${verdict}</td></tr>`}).join('')}
- if($('geometryCrossInfo'))$('geometryCrossInfo').innerHTML=gx.available?`<b>${gx.status}</b><br>${gx.note}<br>同／異分支配對支持：${gx.supports}；衝突：${gx.conflicts}；無法再細分：${gx.inconclusive}<br>已驗證數值死點中，傳動角接近 0 或 I13≈I23：${gx.deadSupports}/${gx.deadTotal}`:`<b>${gx.status}</b><br>${gx.note}`;
+ if($('geometryRows')){$('geometryRows').innerHTML=analysis.specified.map(p=>{if(!p.ok)return `<tr><td>${escapeHtml(p.name)}</td><td colspan="8">不可達</td></tr>`;let g=p.geom;if(!g||!g.available)return `<tr><td>${escapeHtml(p.name)}</td><td colspan="8">不適用</td></tr>`;let f=x=>Number.isFinite(x)?x.toFixed(6):'∞';let ip=g.icFinite?`(${g.I13[0].toFixed(2)}, ${g.I13[1].toFixed(2)})`:'∞（平行）';let verdict=(g.sign1==='0'||g.sign2==='0'||(Number.isFinite(g.icResidual)&&g.icResidual<=analysis.o.geoTol))?'接近幾何奇異':`符號指紋 ${g.signPair}`;return `<tr><td>${escapeHtml(p.name)}</td><td>${g.core.links.join('→')}${g.core.virtualInput?'（虛擬輸入）':''}</td><td>${f(g.mu1)}</td><td>${f(g.mu2)}</td><td>${g.signPair}</td><td>${ip}</td><td>${Number.isFinite(g.icResidual)?g.icResidual.toExponential(3):'∞'}</td><td>迴路${p.tCircuit||'—'}／分支${p.tBranch||'—'}</td><td>${verdict}</td></tr>`}).join('')}
+ if($('geometryCrossInfo'))$('geometryCrossInfo').innerHTML=gx.available?`<div class="side-block-title">${gx.status}</div><p class="side-block-lead">${gx.note}</p><dl class="side-kv"><div><dt>分支比對</dt><dd>一致 ${gx.supports} · 衝突 ${gx.conflicts} · 無法判定 ${gx.inconclusive}</dd></div><div><dt>死點幾何</dt><dd>${gx.deadSupports}/${gx.deadTotal} 接近傳動角 0 或瞬心重合</dd></div></dl>`:`<div class="side-block-title">${gx.status}</div><p class="side-block-lead">${gx.note}</p>`;
  $('equationList').innerHTML=analysis.constraints.map(x=>`<div class="eq">(${x.a}x−${x.b}x)²+(${x.a}y−${x.b}y)²=${x.L.toFixed(6)}² [${x.link}]</div>`).join('');
- let lc=analysis.limitCircle;$('limitCircleInfo').innerHTML=lc?`<b>兩個極限圓</b><br>核心耦桿點：${lc.coupler}<br>雙連桿：${lc.linkA}＋${lc.linkB}（${lc.center}－${lc.middle}－${lc.coupler}）<br>Q2 內半徑：|${lc.rA.toFixed(4)}−${lc.rB.toFixed(4)}|＝${lc.inner.toFixed(4)}<br>Q3 外半徑：${lc.rA.toFixed(4)}＋${lc.rB.toFixed(4)}＝${lc.outer.toFixed(4)}<br>曲線交點：${lc.intersections.length} 個<br><small>實線為圓環內可達曲線；虛線為圓環外不可達曲線。</small>`:'<b>兩個極限圓</b><br>目前固定桿與拓樸下，未自動找到「固定軸樞－雙連桿－耦桿點」組合。';
+ let lc=analysis.limitCircle;$('limitCircleInfo').innerHTML=lc?`<div class="side-block-title">極限圓</div><dl class="side-kv"><div><dt>耦桿點</dt><dd>${lc.coupler}</dd></div><div><dt>雙連桿</dt><dd>${lc.linkA}＋${lc.linkB}（${lc.center}－${lc.middle}－${lc.coupler}）</dd></div><div><dt>內半徑 Q2</dt><dd>${lc.inner.toFixed(4)}</dd></div><div><dt>外半徑 Q3</dt><dd>${lc.outer.toFixed(4)}</dd></div><div><dt>軌跡交點</dt><dd>${lc.intersections.length} 個</dd></div></dl><p class="side-block-foot">實線：圓環內可達 · 虛線：圓環外不可達</p>`:'<div class="side-block-title">極限圓</div><p class="side-block-lead">此構型未對應到固定軸－雙連桿－耦桿點組合，故不顯示。</p>';
  stopAnimation();
  let ri=analysis.branches.indexOf(analysis.refBranch);
  if(animation.branch==null||animation.branch>=analysis.branches.length)animation.branch=ri>=0?ri:0;

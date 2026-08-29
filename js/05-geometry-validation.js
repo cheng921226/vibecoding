@@ -45,14 +45,14 @@ function geometryIndicators(p,geoTol=1e-3){
  return{available:true,core,dyad:dy,mu1,mu2,sign1:sg(mu1),sign2:sg(mu2),signPair:`${sg(mu1)}/${sg(mu2)}`,I13:I?I.point:null,I13t:I?I.t:null,icResidual,icFinite:!!I,nearGeometricSingular:(Number.isFinite(mu1)&&Math.abs(mu1)<=geoTol)||(Number.isFinite(mu2)&&Math.abs(mu2)<=geoTol)||(Number.isFinite(icResidual)&&icResidual<=geoTol)}
 }
 function geometryCrossValidation(recs,dead,opt){
- let geoTol=opt.geoTol||1e-3;if(!geometricApplicable())return{available:false,status:'不適用',note:'此版幾何交叉驗證只套用 Stephenson-I/III、Watt-I/II。',conflicts:0,supports:0,deadSupports:0,deadTotal:0,inconclusive:0};
+ let geoTol=opt.geoTol||1e-3;if(!geometricApplicable())return{available:false,status:'不適用',note:'目前型式未啟用幾何交叉驗證（僅部分 Watt／Stephenson 型適用）。',conflicts:0,supports:0,deadSupports:0,deadTotal:0,inconclusive:0};
  let ok=recs.filter(r=>r.ok&&r.geom&&r.geom.available),conflicts=0,supports=0,inconclusive=0;
  for(let i=0;i<ok.length;i++)for(let j=i+1;j<ok.length;j++){let a=ok[i],b=ok[j],za=a.geom.signPair,zb=b.geom.signPair,clean=!za.includes('0')&&!za.includes('?')&&!zb.includes('0')&&!zb.includes('?');if(!clean)continue;
   if(a.tCircuit===b.tCircuit&&a.tBranch===b.tBranch){if(za!==zb)conflicts++;else supports++}
   else if(a.tCircuit===b.tCircuit&&a.tBranch!==b.tBranch){if(za!==zb)supports++;else inconclusive++}
  }
  let deadTotal=0,deadSupports=0;for(let d of dead||[]){if(!d.verified)continue;deadTotal++;let g=geometryIndicators(d.pos,geoTol);d.geom=g;if(g.available&&g.nearGeometricSingular)deadSupports++}
- let status=conflicts?'有衝突':supports?'一致／部分一致':'不足以判定',note=conflicts?`有 ${conflicts} 組指定位置在數值法判為同分支，但傳動角符號指紋不同，建議檢查裝配選擇與容許值。`:`傳動角符號提供四構形指紋；瞬心 I13≈I23 只驗證核心四連桿死點。相同符號仍可能屬於不同高階分支，因此不把「同號」當成完整證明。`;
+ let status=conflicts?'有衝突':supports?'大致一致':'資料不足',note=conflicts?`有 ${conflicts} 組位置在數值上被判為同分支，但傳動角符號不一致，請檢查裝配選擇或幾何容許值。`:`以傳動角符號比對分支是否一致；瞬心接近只反映核心四連桿是否近死點，不能單獨當作完整分支證明。`;
  return{available:true,status,note,conflicts,supports,inconclusive,deadSupports,deadTotal,geoTol}
 }
 

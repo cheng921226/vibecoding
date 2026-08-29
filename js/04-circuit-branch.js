@@ -79,11 +79,24 @@ function specified(){return[...document.querySelectorAll('.position')].map(r=>({
 // 兩端死點；以「兩端逼近之死點是否相同」判迴路，以「趨近死點時輸出桿角度變化
 // 的正負（Δθ_out 臨界符號）」判分支——與論文 §3-2-1 敘述及結論 3～5 一致。
 function outApproachSign(tr){
- // 取樣本末端的輸出桿角度變化，作為趨近死點時 Δθ_out 的臨界符號
- let s=tr&&tr.samples;if(!s||s.length<2)return Math.sign((tr&&tr.trend)||0);
- let n=s.length,a=outputAngle(s[Math.max(0,n-3)].pos),b=outputAngle(s[n-1].pos),d=b-a;
+ // 趨近死點時輸出桿角度變化符號（論文 §3-2-1）
+ let s=tr&&tr.samples;
+ if(!s||s.length<2)return Math.sign((tr&&tr.trend)||0);
+ let n=s.length;
+ // 取末端數點的淨變化，避免單步噪聲
+ let i0=Math.max(0,n-Math.min(6,n));
+ let a=outputAngle(s[i0].pos),b=outputAngle(s[n-1].pos),d=b-a;
  while(d>180)d-=360;while(d<-180)d+=360;
- return Math.sign(d)||Math.sign((tr&&tr.trend)||0);
+ let sg=Math.sign(d);
+ if(sg)return sg;
+ // 後備：逐段加總
+ let sum=0;
+ for(let i=i0+1;i<n;i++){
+  let da=outputAngle(s[i].pos)-outputAngle(s[i-1].pos);
+  while(da>180)da-=360;while(da<-180)da+=360;
+  sum+=da;
+ }
+ return Math.sign(sum)||Math.sign((tr&&tr.trend)||0);
 }
 function positionEndpoints(angle,seed,o){
  let base=solve(rad(angle),seed||guess0(),o),start=base.ok?base.pos:(seed||guess0());
@@ -111,12 +124,12 @@ function thesisIdentify(list,o){
 function classifyDefects(recs){
  if(!recs.length)return{labels:['未設定'],reasons:['尚未加入任何指定位置'],primary:'未設定'};
  let ok=recs.filter(r=>r.ok),bad=recs.filter(r=>!r.ok),labels=[],reasons=[];
- if(bad.length){labels.push('含不可達位置');reasons.push(`${bad.map(b=>b.name).join('、')} 不落在任何分支的可達範圍內`)}
+ if(bad.length){labels.push('含不可達位置');reasons.push(`${bad.map(b=>b.name).join('、')} 超出目前追蹤到的可達角度範圍`)}
  if(ok.length>1){
-  if(new Set(ok.map(r=>r.tCircuit)).size>1){labels.push('迴路缺陷');reasons.push('指定位置兩端逼近之死點不同，分屬不同迴路（結論 §4）')}
+  if(new Set(ok.map(r=>r.tCircuit)).size>1){labels.push('迴路缺陷');reasons.push('指定位置分屬不同迴路：兩端逼近的死點組合不同，無法僅靠轉動輸入桿互通')}
   let byC={};ok.forEach(r=>{(byC[r.tCircuit]||(byC[r.tCircuit]=new Set())).add(r.tBranch)});
-  if(Object.values(byC).some(s=>s.size>1)){labels.push('分支缺陷');reasons.push('同一迴路內指定位置逼近相同兩端死點，但趨近死點時輸出桿角度變化符號不同（§3-2-1）')}
+  if(Object.values(byC).some(s=>s.size>1)){labels.push('分支缺陷');reasons.push('同一迴路內仍分屬不同分支：兩端死點相同，但趨近死點時輸出角變化方向不同')}
  }
- if(!labels.length){labels.push('同一迴路、同一分支');reasons.push('所有指定位置兩端逼近之死點相同，且趨近死點時輸出桿角度變化同號，無迴路／分支缺陷')}
+ if(!labels.length){labels.push('同一迴路、同一分支');reasons.push('各指定位置兩端死點一致，且趨近死點時輸出角變化同向，無迴路或分支切換')}
  return{labels,reasons,primary:labels[0]};
 }
