@@ -1,2 +1,656 @@
-<!-- TODO(feature/home): 製作首頁、專題介紹與各功能入口。 -->
+<!doctype html>
+<html lang="zh-Hant">
 
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Linkage六連桿選型評估</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/commercial.css">
+</head>
+
+<body>
+  <!-- ========== Commercial Landing ========== -->
+  <div id="landing">
+    <div class="landing-top">
+      <div class="landing-brand">
+        <svg class="logo-linkage" viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
+          <rect x="0" y="0" width="40" height="40" rx="10" fill="#2a7a7c" />
+          <g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 28 H32" />
+            <circle cx="12" cy="28" r="2.2" fill="#fff" stroke="none" />
+            <circle cx="28" cy="28" r="2.2" fill="#fff" stroke="none" />
+            <path d="M12 28 L16 14" />
+            <path d="M16 14 L26 16" />
+            <path d="M26 16 L28 28" />
+            <circle cx="16" cy="14" r="2" fill="#fff" stroke="none" />
+            <circle cx="26" cy="16" r="2" fill="#fff" stroke="none" />
+          </g>
+        </svg>
+        <span class="landing-brand-name">Linkage六連桿選型評估</span>
+      </div>
+      <span class="landing-nav-hint">Linkage六連桿選型評估</span>
+    </div>
+    <div class="landing-hero">
+      <h1 class="hero-title-oneline">六連桿構型探索與運動分析平台</h1>
+      <p class="subtitle">告別繁瑣的機構辨識與反覆建模，快速探索適合的六連桿方案</p>
+      <div class="landing-tools" role="list">
+        <button type="button" class="tool-card" data-enter-mode="recommend" role="listitem">
+          <h3>構型智慧推薦</h3>
+          <p>透過對話理解需求，從九種構型中智慧評估並推薦最適合的方案。</p>
+          <span class="tool-cta">開始選型 <span aria-hidden="true">→</span></span>
+        </button>
+        <button type="button" class="tool-card" data-enter-mode="identify" role="listitem">
+          <h3>機構名稱辨識</h3>
+          <p>根據輸入的連桿長度與接頭位置，自動辨識機構的類型與名稱。</p>
+          <span class="tool-cta">開始辨識 <span aria-hidden="true">→</span></span>
+        </button>
+        <button type="button" class="tool-card" data-enter-mode="branch" role="listitem">
+          <h3>機構迴路分析</h3>
+          <p>已知機構類型與尺寸時，檢查能否轉完、有無死點，並播放運動結果。</p>
+          <span class="tool-cta">進入分析 <span aria-hidden="true">→</span></span>
+        </button>
+      </div>
+    </div>
+    <div class="landing-footer">
+      <div>Linkage六連桿選型評估</div>
+      <div class="landing-disclaimer">依《平面六連桿機構之迴路與分支辨識》與《平面六連桿機構之分支辨識》論文方法建置。
+        <br>本軟體僅供工程輔助選型與數值分析參考，不構成設計、製造或安全上之保證。功能推薦結果不保證枚舉全部實根。使用者應依適用之設計規範、標準與實務自行驗證後採用。本團隊不負擔任何直接或間接之法律責任。
+      </div>
+    </div>
+  </div>
+  <!-- ========== App Workspace ========== -->
+  <div id="appWorkspace">
+
+    <header class="app-header">
+      <div class="brand-row">
+        <div class="mini-logo"><svg class="logo-linkage" viewBox="0 0 40 40" width="32" height="32" aria-hidden="true">
+            <rect x="0" y="0" width="40" height="40" rx="9" fill="#2a7a7c" />
+            <g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 28 H32" />
+              <circle cx="12" cy="28" r="2.2" fill="#fff" stroke="none" />
+              <circle cx="28" cy="28" r="2.2" fill="#fff" stroke="none" />
+              <path d="M12 28 L16 14" />
+              <path d="M16 14 L26 16" />
+              <path d="M26 16 L28 28" />
+              <circle cx="16" cy="14" r="2" fill="#fff" stroke="none" />
+              <circle cx="26" cy="16" r="2" fill="#fff" stroke="none" />
+            </g>
+          </svg></div>
+        <div>
+          <small>Linkage六連桿選型評估</small>
+          <h1>六連桿構型探索與運動分析</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="backToLanding">← 返回首頁</button>
+      </div>
+    </header>
+
+    <div class="shell">
+      <nav><button class="nav active" data-page="1">1 工具工作區</button><button class="nav" data-page="2">2
+          幾何尺寸</button><button class="nav" data-page="3">3 初始構形</button><button class="nav" data-page="4">4
+          分析條件</button><button class="nav" data-page="5">5 指定位置</button><button class="nav" data-page="6">6
+          執行分析</button><button class="nav" data-page="7">7 分析結果</button></nav>
+      <main>
+        <section class="page active" data-page="1">
+          <div class="head">
+            <div>
+              <h2 id="workspaceTitle">工作區</h2>
+            </div>
+          </div>
+          <div class="task-mode-grid" role="radiogroup" aria-label="辨識功能" hidden>
+            <label class="task-mode active" id="taskIdentifyLabel"><input id="taskIdentify" type="radio" name="taskMode"
+                value="identify" checked><span><b>辨識九型機構</b><small>依《辨識規則》四步驟判斷 W／S、4／5、B／T、Ⅰ／Ⅱ／Ⅲ</small></span></label>
+            <label class="task-mode" id="taskRecommendLabel"><input id="taskRecommend" type="radio" name="taskMode"
+                value="recommend"><span><b>依功能推薦構型</b><small>描述夾持、送料、雨刷、步態等功能，系統轉成工程需求並推薦前三名</small></span></label>
+            <label class="task-mode" id="taskBranchLabel"><input id="taskBranch" type="radio" name="taskMode"
+                value="branch"><span><b>辨識迴路／分支</b><small>先選擇已知機構型式，再輸入尺寸與初始構形</small></span></label>
+          </div>
+          <div id="recommendPanel" class="recommend-panel dual-mode-recommend" hidden>
+            <div class="rec-split rec-split-fixed">
+              <!-- LEFT: dialogue -->
+              <section class="rec-chat-pane">
+                <div class="rec-chat-head">
+                  <div class="rec-chat-title-group">
+                    <h3>需求對話</h3>
+
+                  </div>
+                  <div class="rec-chat-head-actions">
+                    <button type="button" id="btnOpenAiModal" class="rec-outline-btn">⚙️ AI 連線設定</button>
+                    <button type="button" id="clearFunctionRecommendation" class="rec-outline-btn">＋ 新對話</button>
+                  </div>
+                </div>
+                <div class="rec-chat-body" id="recChatBody">
+                  <div id="recChatMessages" class="rec-chat-messages"></div>
+                  <div id="recQuizHost" class="rec-quiz-host"></div>
+                </div>
+                <div class="rec-chat-input-row">
+                  <input type="text" id="recChatInput" placeholder="點選選項，或以頓號堆疊關鍵詞後送出…" autocomplete="off">
+                  <button type="button" id="recommendByFunction" class="rec-send-btn">送出</button>
+                </div>
+                <!-- engine fields kept for algorithm -->
+                <div hidden aria-hidden="true">
+                  <select id="functionPreset">
+                    <option value="custom">自訂</option>
+                    <option value="gripper">夾持</option>
+                    <option value="feeder">送料</option>
+                    <option value="wiper">雨刷</option>
+                    <option value="press">壓合</option>
+                    <option value="gait">步態</option>
+                    <option value="door">門蓋</option>
+                  </select>
+                  <textarea id="functionDescription"></textarea>
+                  <select id="functionFocus">
+                    <option value="auto">auto</option>
+                    <option value="trajectory">trajectory</option>
+                    <option value="angle">angle</option>
+                    <option value="pose">pose</option>
+                    <option value="balanced">balanced</option>
+                  </select>
+                  <select id="functionInputMotion">
+                    <option value="any">any</option>
+                    <option value="continuous">continuous</option>
+                    <option value="oscillating">oscillating</option>
+                  </select>
+                  <input id="functionQuickReturn" type="checkbox"><input id="functionHighForce" type="checkbox"><input
+                    id="functionObstacle" type="checkbox"><input id="functionPose" type="checkbox">
+                  <input id="functionSimpleInput" type="checkbox" checked><input id="functionCompact"
+                    type="checkbox"><input id="functionAllowNearDead" type="checkbox">
+                  <select id="functionSimplePriority">
+                    <option value="ignore" selected>ignore</option>
+                    <option value="prefer">prefer</option>
+                    <option value="must">must</option>
+                  </select>
+                  <select id="functionGroup4Priority">
+                    <option value="ignore" selected>ignore</option>
+                    <option value="prefer">prefer</option>
+                    <option value="must">must</option>
+                  </select>
+                  <select id="functionComplexity">
+                    <option value="any" selected>any</option>
+                    <option value="simple">simple</option>
+                    <option value="complex">complex</option>
+                  </select>
+                </div>
+                <div id="functionRecommendationStatus" class="status" hidden></div>
+              </section>
+
+              <!-- RIGHT: results + compare scroll together -->
+              <aside class="rec-result-pane">
+                <div class="rec-result-head">
+                  <h3>推薦候選</h3>
+                  <span class="chat-result-badge" id="chatResultBadge">尚未產生</span>
+                </div>
+                <div class="rec-result-scroll" id="recResultScroll">
+                  <div id="functionInterpretation" class="function-interpretation" hidden></div>
+                  <div id="functionRecommendations" class="function-recommendations rec-cards-col"></div>
+                  <div class="rec-result-empty" id="recResultEmpty">
+                    <div class="chat-result-empty-icon">◎</div>
+                    <p>完成對話後，此處顯示推薦構型</p>
+                  </div>
+                  <div class="rec-compare-inline" id="recCompareSection">
+                    <div class="rec-compare-head">
+                      <h4>前三名分項比較</h4>
+                      <span class="pill-soft" id="recCompareSource"></span>
+                    </div>
+                    <div id="recCompareTableHost" class="rec-compare-host">
+                      <p class="rec-compare-placeholder">送出需求後顯示評分表</p>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <!-- AI modal -->
+            <div class="rec-modal" id="recAiModal" hidden>
+              <div class="rec-modal-backdrop" id="recAiModalBackdrop"></div>
+              <div class="rec-modal-card" role="dialog" aria-modal="true" aria-labelledby="recAiModalTitle">
+                <div class="rec-modal-head">
+                  <h3 id="recAiModalTitle">AI 連線設定</h3>
+                  <button type="button" class="rec-modal-close" id="recAiModalClose" aria-label="關閉">×</button>
+                </div>
+                <p class="rec-ai-note">預設使用<strong>內建專家評分</strong>（需求權重 × 能力矩陣），無需 API。若選「自訂 API Key」，Key
+                  只留在本工作階段、不寫入本機。瀏覽器直連 OpenAI／Gemini 可能受 <strong>CORS</strong> 限制；若連線失敗請改用允許瀏覽器來源的代理 Endpoint，或維持內建評分。
+                </p>
+                <label class="modern-field">服務方式
+                  <select id="aiServiceMode">
+                    <option value="builtin">使用預設（內建引擎）</option>
+                    <option value="custom">自訂 API Key</option>
+                  </select>
+                </label>
+                <div id="aiCustomFields" hidden>
+                  <div class="modern-field-grid">
+                    <label class="modern-field">服務廠商
+                      <select id="aiProvider">
+                        <option value="gemini">Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="custom">自訂 Endpoint</option>
+                      </select>
+                    </label>
+                    <label class="modern-field">模型
+                      <select id="aiModel">
+                        <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                      </select>
+                    </label>
+                  </div>
+                  <label class="modern-field" id="aiBaseUrlWrap" hidden>API Base URL
+                    <input id="aiBaseUrl" type="text" value="" placeholder="自動帶入或自行填寫" autocomplete="off">
+                  </label>
+                  <label class="modern-field">API Key
+                    <input id="aiApiKey" type="password" placeholder="請輸入您的 API Key" autocomplete="new-password"
+                      spellcheck="false">
+                  </label>
+                  <label class="check rec-remember-check"><input type="checkbox" id="aiRememberVendor"> 記住廠商和模型（仍不儲存 API
+                    Key）</label>
+                </div>
+                <div class="rec-modal-actions">
+                  <button type="button" id="aiApplySettings" class="modern-btn-primary">套用</button>
+                  <button type="button" id="aiTestConnection" class="modern-btn-secondary" hidden>測試連線</button>
+                  <button type="button" id="aiClearKey" class="modern-btn-secondary" hidden>清除</button>
+                  <span class="rec-modal-hint" id="aiModalStatus">使用預設（內建引擎）</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="identifyPanel" class="identify-panel">
+            <div class="identify-intro">
+              <p>本功能依連接拓樸、固定桿與輸入桿，套用《辨識規則》四步驟，判定九型六連桿名稱（如 Watt-I、Stephenson-III 等）。右側會逐步列出判斷證據。</p>
+              <p><b>怎麼定義桿件：</b>每列代表一根桿；接頭以逗號分隔，例如三接頭桿填 A, D, G。接頭名稱可自行命名，但每個旋轉接頭必須剛好連接兩根桿。填完後指定固定桿與輸入桿，再按「依文件四步規則辨識」。
+              </p>
+              <p><b>判斷依據：</b>① Watt＝兩個四連桿共用一桿；Stephenson＝一個四連桿加一個五連桿。② 判斷輸入桿位於四連桿組或五連桿組。③ 輸入桿二接頭為 B、三接頭為 T。④
+                再依固定桿接頭數與其和三接頭桿的連接關係判定 Ⅰ、Ⅱ、Ⅲ。結果區會逐步列出實際判斷證據。</p>
+            </div>
+            <div class="identify-layout">
+              <div class="identify-form-col">
+                <h3 class="identify-form-title">輸入連接拓樸</h3>
+                <div id="topologyInputs" class="topology-inputs"></div>
+                <div class="identify-selects"><label>固定桿<select id="identifyGround"></select></label><label>輸入桿<select
+                      id="identifyInput"></select></label></div>
+                <div class="identify-actions"><button id="clearTopology">清空輸入</button><button
+                    id="loadIdentifyExample">載入示範資料</button><button id="identifyNineType"
+                    class="primary-action">依文件四步規則辨識</button></div>
+                <div id="identifyStatus" class="status"></div>
+              </div>
+              <aside class="identify-result-card" id="identifyResultCard">
+                <div class="identify-result-scroll">
+                  <small>辨識結果</small>
+                  <div id="identifyResult" class="identify-result-empty">尚未辨識</div>
+                  <div id="identifyDetails" class="identify-details"></div>
+                </div>
+                <button id="applyIdentifiedModel" class="primary-action" disabled>套用結果並進入迴路／分支分析</button>
+              </aside>
+            </div>
+          </div>
+          <div id="branchModelPanel" hidden>
+            <div class="head subhead">
+              <div>
+                <h2>選擇機構型式</h2>
+              </div>
+            </div>
+            <div id="modelCards" class="cards"></div>
+            <div id="modelNote" class="note"></div>
+          </div>
+        </section>
+        <section class="page" data-page="2">
+          <div class="head">
+            <div>
+              <h2>幾何尺寸與初始裝配</h2>
+              <p class="page-lead">設定各接頭位置或桿長與角度，建立可分析的初始幾何；右側圖會隨輸入同步更新。</p>
+            </div><span id="modelBadge" class="pill"></span>
+          </div>
+          <div class="geometry-mode-bar">
+            <div>
+              <b>選擇一種輸入方式</b>
+              <span>一次只會啟用一組欄位；切換時系統會把目前幾何換算到另一種表示方式。</span>
+            </div>
+            <div class="geometry-mode-options" role="radiogroup" aria-label="幾何輸入方式">
+              <label class="geometry-mode-option active" id="modePolarLabel">
+                <input id="modePolar" type="radio" name="geometryMode" value="polar" checked>
+                <span><b>桿長＋角度</b><small>由基準點、桿長與方向建立接頭</small></span>
+              </label>
+              <label class="geometry-mode-option" id="modeCoordinateLabel">
+                <input id="modeCoordinate" type="radio" name="geometryMode" value="coordinate">
+                <span><b>接頭座標</b><small>直接輸入每個接頭的 x、y</small></span>
+              </label>
+            </div>
+          </div>
+          <div class="geometry-actions" role="group" aria-label="幾何尺寸操作">
+            <button type="button" id="geoLoadExample" class="geo-action-btn primary">代入範例尺寸</button>
+            <button type="button" id="geoClear" class="geo-action-btn">清除</button>
+            <button type="button" id="geoUpdate" class="geo-action-btn">更新</button>
+          </div>
+          <div class="split geometry-split">
+            <div>
+              <div id="polarInputPanel">
+                <div class="input-method-note">
+                  <h3>桿長與絕對角度輸入</h3>
+                  <p>先設定基準接頭，再由參考接頭、桿長與相對全域 \(x\) 軸的角度建立其他接頭。三接頭桿的第三點也會以一組桿長與角度描述，因此能保留剛體形狀。</p>
+                </div>
+                <div id="polarFields" class="polar-grid"></div>
+              </div>
+              <div id="coordinateInputPanel" hidden>
+                <div class="input-method-note">
+                  <h3>接頭座標輸入</h3>
+                  <p>直接輸入各接頭的 \(x、y\) 座標，適合已有 CAD、量測資料或論文例題座標的情況。</p>
+                </div>
+                <div id="coordFields" class="coord-grid"></div>
+              </div>
+              <h3>系統換算後的桿件尺寸</h3>
+              <div id="lengthTable" class="lengths"></div>
+              <div id="geometryStatus" class="status"></div>
+            </div>
+            <aside class="diagram-box">
+              <h3 id="diagramTitle"></h3>
+              <svg id="topologySvg" viewBox="0 0 620 470"></svg>
+              <div class="legend"><span><i class="ground"></i>固定桿</span><span><i class="input"></i>輸入桿</span><span><i
+                    class="moving"></i>活動桿</span></div>
+              <div class="geometry-help">
+                <b>符號說明</b>
+                <p><b>L1～L6</b>：六根連桿編號（圖上標在桿側）。<b>A～G</b>：七個旋轉接頭（圖上圓點旁字母）。每根桿由 2 或 3 個接頭組成；每個接頭恰連接兩根桿。</p>
+                <p><b>固定桿</b>相對機架不動；<b>輸入桿</b>由驅動角帶動。型名中的 <b>B／T</b> 表示輸入為二接頭或三接頭桿；下標 <b>4／5</b> 表示輸入在四連桿組或五連桿組。</p>
+                <p><b>角度</b>：0° 指向全域 +x，逆時針為正。切換輸入方式只改欄位，不改機構本身。</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+        <section class="page" data-page="3">
+          <div class="head">
+            <div>
+              <h2>初始組合構形</h2>
+              <p class="page-lead">由此姿態起算輸入角並追蹤同一解支；不同初始構形可能落在不同迴路或分支。</p>
+            </div>
+          </div>
+          <div class="split">
+            <div>
+              <div class="note"><b>說明：</b>初始座標是一組完整組合構形。分析器從此姿態旋轉輸入桿，以牛頓－拉福森法延續追蹤。請確認預覽圖與預期裝配一致後再往下設定分析條件。</div>
+              <label>初始構形相對旋轉量（°）<input id="initialAngle" type="number" value="0"></label><label>殘差容許值<input
+                  id="previewTol" type="number" value="1e-9"></label><button id="preview">更新初始構形</button>
+              <div id="previewInfo" class="metrics"></div>
+            </div><canvas id="previewCanvas" width="900" height="620"></canvas>
+          </div>
+        </section>
+        <section class="page" data-page="4">
+          <div class="head">
+            <div>
+              <h2>分析條件</h2>
+              <p class="condition-flow-desc">數值流程：每一步皆計算 Jacobian
+                最小奇異指標；當指標接近門檻時主動縮小輸入角步長，低於門檻後搜尋鄰域局部最低點。若下一位置無法收斂，則縮小步長並從最後有效構形搜尋最低奇異指標。只有位置殘差通過且奇異指標低於門檻才列為已驗證死點。追蹤不會超出本頁設定的角度範圍。
+              </p>
+            </div><span class="pill">數值求解設定</span>
+          </div>
+          <div class="analysis-condition-simple">
+            <div class="form-grid">
+              <label>起始相對旋轉量（°）<input id="startAngle" type="number" value="-180"></label>
+              <label>終止相對旋轉量（°）<input id="endAngle" type="number" value="180"></label>
+              <label>初始步長（°）<input id="stepAngle" type="number" value="1"></label>
+              <label>最小步長（°）<input id="minStep" type="number" value="0.0001"></label>
+              <label>無因次相對殘差容許值<input id="solveTol" type="number" value="1e-9"></label>
+              <label>最大疊代次數<input id="maxIter" type="number" value="80"></label>
+              <label>死點 Jacobian 門檻<input id="singularTol" type="number" value="1e-5"></label>
+              <label>分支端點相對容許值<input id="endpointTol" type="number" value="0.001"></label>
+              <label>幾何指標零值門檻<input id="geoTol" type="number" value="0.001"></label>
+            </div>
+            <div class="explanation-grid">
+              <article>
+                <h3>角度範圍</h3>
+                <p>決定輸入桿由哪個角度追蹤到哪個角度。若要檢查完整旋轉，可設定為 \(-180到180) 或 (0到360)。</p>
+              </article>
+              <article>
+                <h3>步長</h3>
+                <p>初始步長控制一般追蹤速度；接近無法收斂的位置時，系統會逐次縮小，直到最小步長，以逼近分支端點或死點。</p>
+              </article>
+              <article>
+                <h3>殘差與疊代</h3>
+                <p>殘差容許值越小，閉合方程要求越嚴格；最大疊代次數不足時，複雜構形可能提早判定為不收斂。</p>
+              </article>
+              <article>
+                <h3>死點與分支門檻</h3>
+                <p>每一步都計算 Jacobian
+                  最小奇異指標；接近門檻時會主動縮小步長，低於門檻後在鄰域搜尋奇異指標局部最低點，且位置殘差必須通過才標示為「已通過」。端點相對容許值以機構最大桿長為尺度，比較不同端點的接頭位置與週期角度。</p>
+              </article>
+              <article>
+                <h3>幾何交叉驗證門檻</h3>
+                <p>用於判斷 |sin μ₁|、|sin μ₂| 或核心四連桿瞬心殘差 |I₁₃−I₂₃|/L 是否接近 0。這套指標只作為速度瞬心／傳動角的第二套判讀，不取代數值死點搜尋。</p>
+              </article>
+            </div>
+          </div>
+        </section>
+        <section class="page" data-page="5">
+          <div class="head">
+            <div>
+              <h2>指定通過位置</h2>
+            </div><button id="addPosition">＋新增位置</button>
+          </div>
+          <div class="specified-simple">
+            <p class="lead">輸入你希望機構通過的輸入角。分析完成後，系統會判斷每一個位置是否可達，以及它所屬的 Circuit 與 Branch。</p>
+            <div id="positions"></div>
+          </div>
+          <template id="positionTpl">
+            <div class="position"><label>名稱<input class="posName" value="P1"></label><label>相對旋轉量（°）<input
+                  class="posAngle" type="number" value="0"></label><button class="remove">刪除</button></div>
+          </template>
+        </section>
+        <section class="page" data-page="6">
+          <div class="head">
+            <div>
+              <h2>執行九型數值分析</h2>
+            </div>
+          </div>
+          <div class="run run-upgraded">
+            <h3 id="runTitle"></h3>
+            <p>依序執行位置分析、死點搜尋、迴路辨識與分支辨識。</p>
+            <div class="analysis-progress-list">
+              <div data-stage="position"><span>位置分析</span>
+                <div><i></i></div><b>等待</b>
+              </div>
+              <div data-stage="dead"><span>死點搜尋</span>
+                <div><i></i></div><b>等待</b>
+              </div>
+              <div data-stage="circuit"><span>迴路辨識</span>
+                <div><i></i></div><b>等待</b>
+              </div>
+              <div data-stage="branch"><span>分支辨識</span>
+                <div><i></i></div><b>等待</b>
+              </div>
+            </div>
+            <button id="runAnalysis">開始分析</button>
+            <div id="progress"></div>
+          </div>
+        </section>
+        <section class="page" data-page="7">
+          <div class="head">
+            <div>
+              <h2>分析結果</h2>
+              <p class="page-lead">檢視軌跡、迴路與分支、死點與指定位置；可切換分支動畫並對照右側判讀與建議。</p>
+            </div><button id="exportJson">匯出 JSON</button>
+          </div>
+          <div id="sessionMetaStrip" class="session-meta-strip" hidden>
+            <div class="meta-line"><span class="meta-k">Session ID</span><span id="metaBuild"></span></div>
+            <div class="meta-line"><span class="meta-k">Hash ID</span><span id="metaHash"></span></div>
+            <div class="meta-line"><span class="meta-k">執行時間</span><span id="metaTime"></span></div>
+          </div>
+          <div class="summary">
+            <article><small>有效位置</small><b id="sampleCount">—</b></article>
+            <article><small>迴路候選</small><b id="circuitCount">—</b></article>
+            <article><small>分支候選</small><b id="branchCount">—</b></article>
+            <article><small>已驗證／端點候選</small><b id="deadCount">—</b></article>
+            <article class="wide"><small>指定位置判定</small><b id="classification">尚未分析</b>
+              <p id="classificationReason"></p>
+            </article>
+          </div>
+          <div class="result-workspace">
+            <div class="animation-panel">
+              <div class="animation-toolbar">
+                <button id="playAnimation" class="animation-primary">▶ 播放</button>
+                <button id="restartAnimation">↺ 從頭播放</button>
+                <label>速度
+                  <select id="animationSpeed">
+                    <option value="0.25">0.25×</option>
+                    <option value="0.5">0.5×</option>
+                    <option value="1" selected>1×</option>
+                    <option value="2">2×</option>
+                    <option value="4">4×</option>
+                  </select>
+                </label>
+                <label class="animation-toggle"><input id="showMechanism" type="checkbox" checked> 顯示即時機構</label>
+              </div>
+              <div class="branch-selector-wrap"><span class="branch-selector-label">選擇分支動畫：</span>
+                <div id="branchSelector" class="branch-selector"></div>
+              </div>
+              <canvas id="resultCanvas" width="1050" height="700"></canvas>
+              <div class="timeline-controls">
+                <input id="animationTimeline" type="range" min="0" max="0" value="0" step="1" aria-label="動畫時間軸">
+                <div class="timeline-readout">
+                  <span id="animationAngle">輸入角：—</span>
+                  <span id="animationFrame">位置：—</span>
+                  <span id="animationBranch">分支：—</span>
+                </div>
+              </div>
+              <p class="animation-help">按「播放」可觀看完整運動；拖曳時間軸可逐格檢查死點、指定位置及各接頭軌跡。</p>
+            </div>
+            <aside class="result-sidebar">
+              <div class="result-sidebar-scroll">
+                <section class="result-side-block">
+                  <h3>圖層</h3>
+                  <label class="check"><input id="showTraj" type="checkbox" checked>接頭軌跡</label>
+                  <label class="check"><input id="showLimits" type="checkbox" checked>兩個極限圓與耦桿點曲線</label>
+                  <label class="check"><input id="showDead" type="checkbox" checked>死點候選</label>
+                  <label class="check"><input id="showSpecified" type="checkbox" checked>指定位置</label>
+                  <label class="check"><input id="showGeo" type="checkbox" checked>速度瞬心／傳動角</label>
+                </section>
+                <section class="result-side-block">
+                  <div class="adjustment-heading">
+                    <h3>建議調整方案</h3>
+                    <span>依目前結果排序</span>
+                  </div>
+                  <div id="adjustmentPlan" class="adjustment-plan"></div>
+                </section>
+                <section class="result-side-block">
+                  <h3>極限圓資料</h3>
+                  <div id="limitCircleInfo" class="note"></div>
+                </section>
+                <section class="result-side-block">
+                  <h3>幾何交叉驗證</h3>
+                  <div id="geometryCrossInfo" class="note"></div>
+                </section>
+                <section class="result-side-block">
+                  <h3>判讀</h3>
+                  <div id="interpretation" class="note"></div>
+                </section>
+              </div>
+            </aside>
+          </div>
+          <div class="tabs"><button class="active" data-tab="specifiedTab">指定位置</button><button
+              data-tab="branchesTab">迴路／分支</button><button data-tab="deadTab">死點候選</button><button
+              data-tab="geometryTab">幾何指標</button><button data-tab="equationsTab">模型方程</button></div>
+          <div id="specifiedTab" class="tab active">
+            <p class="note" style="margin:0 0 8px">
+              由每個指定位置往輸入角<strong>漸增（D↑）</strong>與<strong>漸減（D↓）</strong>方向逼近兩端死點。兩端死點相同→同一迴路；趨近死點時輸出角變化同向（<span
+                class="trend-up">▲遞增</span>／<span class="trend-dn">▼遞減</span>）→同一分支。</p>
+            <div class="table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>位置</th>
+                    <th>角度</th>
+                    <th>可達</th>
+                    <th>裝配</th>
+                    <th>迴路</th>
+                    <th>分支</th>
+                    <th>死點 D↑<small>（漸增）</small></th>
+                    <th>死點 D↓<small>（漸減）</small></th>
+                    <th>殘差</th>
+                  </tr>
+                </thead>
+                <tbody id="specifiedRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="branchesTab" class="tab">
+            <div class="table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>迴路</th>
+                    <th>分支</th>
+                    <th>角度範圍</th>
+                    <th>樣本數</th>
+                    <th>端點</th>
+                    <th>方向指紋</th>
+                  </tr>
+                </thead>
+                <tbody id="branchRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="deadTab" class="tab">
+            <div class="table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>角度</th>
+                    <th>迴路</th>
+                    <th>驗證／奇異指標</th>
+                    <th>殘差</th>
+                    <th>接頭座標</th>
+                  </tr>
+                </thead>
+                <tbody id="deadRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="geometryTab" class="tab">
+            <div class="note" style="margin:0 0 8px"><b>幾何第二套指標：</b>自動找出含固定桿的核心四連桿。傳動角以
+              <code>sin μ = (u×v)/(|u||v|)</code> 計算，兩組正負號形成構形指紋；速度瞬心 I₁₃ 由 I₁₂I₂₃ 與 I₁₄I₃₄ 兩直線交點求得，I₁₃≈I₂₃ 為核心四連桿死點提示。若
+              I₁₃ 位於無窮遠，瞬心指標標示為 ∞，不強行判別。
+            </div>
+            <div class="table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>位置</th>
+                    <th>核心四連桿</th>
+                    <th>sin μ₁</th>
+                    <th>sin μ₂</th>
+                    <th>符號</th>
+                    <th>I₁₃</th>
+                    <th>|I₁₃−I₂₃|/L</th>
+                    <th>數值法</th>
+                    <th>幾何判讀</th>
+                  </tr>
+                </thead>
+                <tbody id="geometryRows"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="equationsTab" class="tab">
+            <div id="equationList" class="equations"></div>
+          </div>
+        </section>
+        <div class="bottom"><button id="prev">上一步</button><button id="next">下一步</button></div>
+      </main>
+    </div>
+    <footer>
+      <div class="disclaimer-line">依《平面六連桿機構之迴路與分支辨識》與《平面六連桿機構之分支辨識》論文方法建置。</div>
+      <div class="disclaimer-line">
+        本軟體僅供工程輔助選型與數值分析參考，不構成設計、製造或安全上之保證。功能推薦結果不保證枚舉全部實根。使用者應依適用之設計規範、標準與實務自行驗證後採用。本團隊不負擔任何直接或間接之法律責任。</div>
+    </footer>
+  </div><!-- /appWorkspace -->
+  <script src="js/01-ui-geometry.js"></script>
+  <script src="js/02-nine-type-identification.js"></script>
+  <script src="js/03-numerical-solver.js"></script>
+  <script src="js/04-circuit-branch.js"></script>
+  <script src="js/05-geometry-validation.js"></script>
+  <script src="js/06-results-animation.js"></script>
+  <script src="js/07-function-recommendation.js"></script>
+  <script src="js/00-session.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
+</html>
